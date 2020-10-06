@@ -45,7 +45,6 @@ func tickAllObjects() {
 		val := e.Value.(tickObject)
 
 		if val.targetTick == currentTick {
-			// TODO: maybe run this in parallel
 			val.callback()
 			tickedObjects.Remove(e)
 		} else {
