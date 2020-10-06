@@ -21,25 +21,13 @@ type IEntity interface {
 }
 
 const (
-	IsOnfire = 0x1
-	IsCrouching = 0x2
-	IsSprinting = 0x8
-	IsSwimming = 0x10
-	IsInvisible = 0x20
-	HasGlowingEffect = 0x40
-	Is = 0x80
-)
-
-type Pose int32
-
-const (
-	PoseStanding = Pose(iota)
-	PoseFallFlying
-	PoseSleeping
-	PoseSwimming
-	PoseSpinAttack
-	PoseSneaking
-	PoseDying
+	isOnfire = 0x1
+	isCrouching = 0x2
+	isSprinting = 0x8
+	isSwimming = 0x10
+	isInvisible = 0x20
+	hasGlowingEffect = 0x40
+	isFlyingWithElytra = 0x80
 )
 
 type Entity struct {
@@ -66,10 +54,9 @@ type Entity struct {
 	// flags
 	OnFire				bool
 	Sprinting			bool
+	Invisible			bool
 	Glowing				bool
-
-	// the current pose
-	Pose 				Pose
+	Pose				minecraft.Pose
 
 	// The metadata of the entity
 	// has changed
@@ -101,23 +88,19 @@ func (e *Entity) GetEntity() *Entity {
 func (e *Entity) WriteMetadata(writer *minecraft.EntityMetadataWriter) {
 	val := byte(0)
 
+	// flags
 	if e.OnFire {
-		val |= 0x01
+		val |= isOnfire
 	}
-
 	if e.Sprinting {
-		val |= 0x08
+		val |= isSprinting
 	}
-
 	if e.Glowing {
-		val |= 0x40
+		val |= hasGlowingEffect
 	}
 
-	if val != 0 {
-		writer.WriteByte(0, val)
-	}
-
-	writer.WriteVarint(6, int32(e.Pose))
+	writer.WriteByte(0, val)
+	writer.WritePose(6, e.Pose)
 }
 
 func GetEntityTypeByName(name string) {

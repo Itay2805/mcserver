@@ -18,6 +18,9 @@ type Player struct {
 	SkinMask	byte
 	MainHand	byte
 
+	// Action
+	Flying		bool
+
 	Username	string
 	Health		float32
 	Food		float32
@@ -30,19 +33,25 @@ func NewPlayer(username string, uuid uuid.UUID) *Player {
 	return &Player{
 		Living:   Living{
 			Entity:        Entity{
-				Type:      playerType,
-				EID:       0, // TODO: generate
-				UUID:      uuid,
-				Position:  math.Point{ 0, 0, 0 },
-				Velocity:  math.Point{ 0, 0, 0},
-				Yaw:       0,
-				Pitch:     0,
-				HeadYaw:   0,
-				OnGround:  true,
-				OnFire:    false,
-				Sprinting: false,
-				Glowing:   false,
-				Pose:      PoseStanding,
+				Type:             playerType,
+				EID:              0, // TODO: generate
+				UUID:             uuid,
+				Moved:            false,
+				Rotated:          false,
+				OnGroundChanged:  false,
+				Position:         math.Point{0, 0, 0},
+				Velocity:         math.Point{0, 0, 0},
+				Yaw:              0,
+				Pitch:            0,
+				HeadYaw:          0,
+				OnGround:         true,
+				OnFire:           false,
+				Sprinting:        false,
+				Invisible:        false,
+				Glowing:          false,
+				Pose:			  minecraft.PoseStanding,
+				MetadataChanged:  false,
+				bounds:           nil,
 			},
 			IsHandActive:  false,
 			OffhandActive: false,

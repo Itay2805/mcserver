@@ -30,27 +30,33 @@ var packetHandlers = [][]PacketHandler {
 		0x00: login.HandleLoginStart,
 	},
 	socket.Play: {
-		//0x02: play.HandleChatMessage,
-		//0x03: play.HandleClientStatus,
+		// 0x00
+		// 0x01
+		// 0x02
+		// 0x03
+		// 0x04
 		0x05: play.HandleClientSettings,
-		//0x09: play.HandlePluginMessage,
-		//
-		//0x0B: play.HandleKeepAlive,
+		// 0x06
+		// 0x07
+		// 0x08
+		// 0x09
+		// 0x0A
+		// 0x0B
+		// 0x0C
+		// 0x0D
+		// 0x0E
+		// 0x0F
 		0x11: play.HandlePlayerPosition,
 		0x12: play.HandlePlayerPositionAndRotation,
 		0x13: play.HandlePlayerRotation,
 		0x14: play.HandlePlayerMovement,
-		//
-		//0x13: play.HandlePlayerAbilities,
-		//0x14: play.HandlePlayerDigging,
-		//0x15: play.HandleEntityAction,
-		//
-		//0x1A: play.HandleHeldItemChange,
-		//0x1B: play.HandleCreativeInventoryAction,
-		//
-		//0x1D: play.HandleAnimation,
-		//
-		//0x1F: play.HandlePlayerBlockPlacement,
+		// 0x15
+		// 0x16
+		// 0x17
+		// 0x18
+		0x19: play.HandlePlayerAbilities,
+		// 0x1A
+		0x1B: play.HandleEntityAction,
 	},
 }
 

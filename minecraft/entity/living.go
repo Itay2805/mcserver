@@ -27,7 +27,5 @@ func (p *Living) WriteMetadata(writer *minecraft.EntityMetadataWriter) {
 		val |= 0x2
 	}
 
-	if val != 0 {
-		writer.WriteByte(7, val)
-	}
+	writer.WriteByte(7, val)
 }

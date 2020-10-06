@@ -8,8 +8,6 @@ import (
 	"github.com/itay2805/mcserver/minecraft/world"
 	"github.com/itay2805/mcserver/server/socket"
 	"github.com/panjf2000/ants"
-	"log"
-	"reflect"
 	"sync"
 	"time"
 
@@ -82,20 +80,10 @@ func NewPlayer(socket socket.Socket) *Player {
 	}
 }
 
-func (p *Player) Change(field, value, flag interface{}) {
+func (p *Player) Change(cb func()) {
 	p.changeMutex.Lock()
 	defer p.changeMutex.Unlock()
-
-	// TODO: in debug only
-	if reflect.ValueOf(field).Elem().Kind() != reflect.ValueOf(value).Kind() {
-		log.Panicln("Can't assign", reflect.TypeOf(value), "to", reflect.TypeOf(field))
-	}
-
-	p.changeQueue.Add(PendingChange{
-		Field:      field,
-		Value:      value,
-		ChangeFlag: flag,
-	})
+	p.changeQueue.Add(cb)
 }
 
 //
@@ -126,16 +114,7 @@ func (p *Player) syncChanges() {
 
 	// apply all changes
 	for p.changeQueue.Length() > 0 {
-		change := p.changeQueue.Remove().(PendingChange)
-		value := reflect.ValueOf(change.Field)
-
-		// check if the value has changed
-		if change.ChangeFlag != nil && value.Elem().Interface() != change.Value {
-			reflect.ValueOf(change.ChangeFlag).Elem().SetBool(true)
-		}
-
-		// set the value
-		value.Elem().Set(reflect.ValueOf(change.Value))
+		p.changeQueue.Remove().(func())()
 	}
 
 	// if moved update the entity

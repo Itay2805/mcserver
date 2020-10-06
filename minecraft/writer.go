@@ -156,6 +156,18 @@ type EntityMetadataWriter struct {
 	w *Writer
 }
 
+type Pose int32
+
+const (
+	PoseStanding = Pose(0)
+	PoseFallFlying = Pose(1)
+	PoseSleeping = Pose(2)
+	PoseSwimming = Pose(3)
+	PoseSpinAttack = Pose(4)
+	PoseSneaking = Pose(5)
+	PoseDying = Pose(6)
+)
+
 func (writer *EntityMetadataWriter) WriteByte(index byte, val byte) {
 	writer.w.WriteByte(index)
 	writer.w.WriteVarint(0)
@@ -198,6 +210,12 @@ func (writer *EntityMetadataWriter) StartNBT(index byte) NbtWriter {
 		listSizeStack:       []int{},
 		listSizeOffsetStack: []int{},
 	}
+}
+
+func (writer *EntityMetadataWriter) WritePose(index byte, val Pose) {
+	writer.w.WriteByte(index)
+	writer.w.WriteVarint(18)
+	writer.w.WriteVarint(int32(val))
 }
 
 func (writer *EntityMetadataWriter) Done() {

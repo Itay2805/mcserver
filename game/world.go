@@ -44,6 +44,7 @@ func NewWorld(generator world.Generator, provider world.Provider) *World {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (w *World) AddPlayer(player *Player) {
+	player.EID = generateEntityId()
 	player.World = w
 
 	// TODO: load from provider
@@ -58,7 +59,7 @@ func (w *World) AddPlayer(player *Player) {
 
 	// send the join game
 	player.Send(play.JoinGame{
-		EntityId:         		generateEntityId(),
+		EntityId:         		player.EID,
 		Gamemode:         		1,
 		Dimension:        		0,
 		HashedSeed: 	  		0,
