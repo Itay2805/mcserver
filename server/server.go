@@ -55,7 +55,7 @@ var packetHandlers = [][]PacketHandler {
 		// 0x17
 		// 0x18
 		0x19: play.HandlePlayerAbilities,
-		// 0x1A
+		0x1A: play.HandlePlayerDigging,
 		0x1B: play.HandleEntityAction,
 	},
 }

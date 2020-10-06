@@ -3,11 +3,14 @@ package game
 import (
 	"github.com/google/uuid"
 	"github.com/itay2805/mcserver/math"
+	"github.com/itay2805/mcserver/minecraft"
 	"github.com/itay2805/mcserver/minecraft/entity"
 	"github.com/itay2805/mcserver/minecraft/proto/play"
 	"github.com/itay2805/mcserver/minecraft/world"
 	"github.com/itay2805/mcserver/server/socket"
 	"github.com/panjf2000/ants"
+	"log"
+	"reflect"
 	"sync"
 	"time"
 
@@ -18,6 +21,18 @@ type PendingChange struct {
 	Field		interface{}
 	Value		interface{}
 	ChangeFlag	interface{}
+}
+
+type PlayerActionType int
+
+const (
+	PlayerActionNone = PlayerActionType(iota)
+	PlayerActionDig
+)
+
+type PlayerAction struct {
+	Type	PlayerActionType
+	Data	interface{}
 }
 
 type Player struct {
@@ -49,6 +64,12 @@ type Player struct {
 	waitingForPlayers	map[uuid.UUID]chan bool
 	knownPlayers		map[uuid.UUID]bool
 	joined				bool
+
+	// sound related
+	lastSoundPos		math.Point
+	lastSoundTime		time.Time
+
+	ActionQueue			*queue.Queue
 }
 
 func (p *Player) String() string  {
@@ -77,6 +98,8 @@ func NewPlayer(socket socket.Socket) *Player {
 		waitingForPlayers: make(map[uuid.UUID]chan bool),
 		knownPlayers: make(map[uuid.UUID]bool),
 		joined: true,
+
+		ActionQueue: queue.New(),
 	}
 }
 
@@ -128,8 +151,47 @@ func (p *Player) syncChanges() {
 // Tick player
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+func (p *Player) tickDig(position minecraft.Position) {
+	// TODO: don't assume creative
+
+	// get the prev block
+	blkstate := p.World.GetBlockState(position.X, position.Y, position.Z)
+
+	// TODO: queue world update
+
+	// send the sound and animation to other players which are in a 16 block range from
+	// the given effect, farther than that they will just not be able to see it
+	p.World.ForEntitiesInRange(math.NewRect(position.ToPoint(), [3]float64{ 32, 32, 32 }), func(ient entity.IEntity) {
+		log.Println(ient)
+
+		// ignore local player, their client does this anyways
+		if ient == p {
+			return
+		}
+
+		// ignore non-players
+		if other, ok := ient.(*Player); ok {
+			log.Println("Sending to", other)
+			other.Send(play.Effect{
+				EffectID:              play.EffectBlockBreak,
+				Location:              position,
+				Data:                  int32(blkstate),
+				DisableRelativeVolume: false,
+			})
+		} else {
+			log.Println("Not sending to", ient, reflect.TypeOf(ient))
+		}
+	})
+}
+
 func (p *Player) tick() {
-	// TODO: do shit
+	for p.ActionQueue.Length() > 0 {
+		action := p.ActionQueue.Remove().(PlayerAction)
+		switch action.Type {
+			case PlayerActionDig:
+				p.tickDig(action.Data.(minecraft.Position))
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

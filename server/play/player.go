@@ -101,6 +101,23 @@ func HandlePlayerAbilities(player *game.Player, reader *minecraft.Reader) {
 	})
 }
 
+func HandlePlayerDigging(player *game.Player, reader *minecraft.Reader) {
+	status := reader.ReadVarint()
+	location := reader.ReadPosition()
+	//face := reader.ReadByte()
+
+	switch status {
+		// queue a player dig action
+		case 0:
+			player.Change(func() {
+				player.ActionQueue.Add(game.PlayerAction{
+					Type: game.PlayerActionDig,
+					Data: location,
+				})
+			})
+	}
+}
+
 func HandleEntityAction(player *game.Player, reader *minecraft.Reader) {
 	eid := reader.ReadVarint()
 	aid := reader.ReadVarint()

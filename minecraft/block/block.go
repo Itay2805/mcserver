@@ -4,18 +4,6 @@ package block
 // Base block type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Material int
-
-const (
-	MaterialAir = Material(iota)
-	MaterialRock
-	MaterialDirt
-	MaterialPlant
-	MaterialWood
-	MaterialWeb
-	MaterialWool
-)
-
 // the base block type
 type Block struct {
 	// The identification of this block
@@ -27,7 +15,6 @@ type Block struct {
 
 	// is this a solid block
 	Solid			bool
-	Material		Material
 
 	// light related values
 	Transparent		bool

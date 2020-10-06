@@ -27,7 +27,8 @@ MATERIALS = {
     'plant': 'MaterialPlant',
     'wood': 'MaterialWood',
     'web': 'MaterialWeb',
-    'wool': 'MaterialWool'
+    'wool': 'MaterialWool',
+    'bamboo': 'MaterialBamboo',
 }
 
 #
@@ -35,8 +36,8 @@ MATERIALS = {
 # in the json
 #
 UNKNOWNS = {
-    'bamboo_sapling': 'plant',
-    'bamboo': 'plant',
+    'bamboo_sapling': 'bamboo',
+    'bamboo': 'bamboo',
 
     # TODO: we can probably add to the generator
     #       so it will check if the variation of the block
@@ -97,12 +98,12 @@ for block in blocks:
     print(f"\tTransparent: {'true' if block['transparent'] else 'false'},")
     print(f"\tFilterLight: {block['filterLight']},")
     print(f"\tEmitLight: {block['emitLight']},")
-    if 'material' in block:
-        if block['material'] == 'UNKNOWN_MATERIAL':
-            block['material'] = UNKNOWNS[block['name']]
-        print(f"\tMaterial: {MATERIALS[block['material']]},")
-    else:
-        print(f"\tMaterial: MaterialAir,")
+    # if 'material' in block:
+    #     if block['material'] == 'UNKNOWN_MATERIAL':
+    #         block['material'] = UNKNOWNS[block['name']]
+    #     print(f"\tMaterial: {MATERIALS[block['material']]},")
+    # else:
+    #     print(f"\tMaterial: MaterialAir,")
     print("}")
 print()
 
