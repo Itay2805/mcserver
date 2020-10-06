@@ -21,6 +21,10 @@ func (p Point) Z() float64 {
 	return p[2]
 }
 
+func (p Point) SubScalar(num float64) Point {
+	return Point{ p[0] -  num, p[1] -  num, p[2] -  num }
+}
+
 // Dist computes the Euclidean distance between two points p and q.
 func (p Point) Dist(q Point) float64 {
 	sum := 0.0

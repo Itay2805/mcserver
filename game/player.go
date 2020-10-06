@@ -161,7 +161,8 @@ func (p *Player) tickDig(position minecraft.Position) {
 
 	// send the sound and animation to other players which are in a 16 block range from
 	// the given effect, farther than that they will just not be able to see it
-	p.World.ForEntitiesInRange(math.NewRect(position.ToPoint(), [3]float64{ 32, 32, 32 }), func(ient entity.IEntity) {
+	soundDistance := math.NewRect(position.ToPoint().SubScalar(16), [3]float64{ 16, 16, 16 })
+	p.World.ForEntitiesInRange(soundDistance, func(ient entity.IEntity) {
 		log.Println(ient)
 
 		// ignore local player, their client does this anyways
