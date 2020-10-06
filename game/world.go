@@ -51,6 +51,7 @@ func (w *World) AddPlayer(player *Player) {
 	// set the spawn point
 	pos := w.World.Generator.GetSpawn()
 	player.Position = math.NewPoint(float64(pos.X), float64(pos.Y), float64(pos.Z))
+	player.UpdateBounds()
 
 	// insert the player to the entity list
 	w.entities.Insert(player)
@@ -88,6 +89,12 @@ func (w *World) UpdateEntityPosition(entity entity.IEntity) {
 
 func (w *World) RemovePlayer(p *Player) {
 	w.entities.Delete(p)
+}
+
+func (w *World) ForEntitiesInRange(rect *math.Rect, cb func(entity entity.IEntity)) {
+	for _, obj := range w.entities.SearchIntersect(rect) {
+		cb(obj.(entity.IEntity))
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

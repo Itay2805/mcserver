@@ -146,8 +146,8 @@ func (writer *Writer) StartNBT() NbtWriter {
 	}
 }
 
-func (writer *Writer) StartEntityMetadata() EntityMetadataWriter {
-	return EntityMetadataWriter{
+func (writer *Writer) StartEntityMetadata() *EntityMetadataWriter {
+	return &EntityMetadataWriter{
 		writer,
 	}
 }

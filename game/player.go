@@ -1,8 +1,8 @@
 package game
 
 import (
-	"fmt"
 	"github.com/google/uuid"
+	"github.com/itay2805/mcserver/math"
 	"github.com/itay2805/mcserver/minecraft/entity"
 	"github.com/itay2805/mcserver/minecraft/proto/play"
 	"github.com/itay2805/mcserver/minecraft/world"
@@ -45,6 +45,7 @@ type Player struct {
 
 	// the chunks loaded by the client of this player
 	loadedChunks 		map[world.ChunkPos]bool
+	loadedEntities		map[int32]bool
 
 	// player info
 	waitingForPlayers	map[uuid.UUID]chan bool
@@ -53,13 +54,11 @@ type Player struct {
 }
 
 func (p *Player) String() string  {
-	username := "<none>"
-	uuid := "<none>"
 	if p.Player != nil {
-		username = p.Username
-		uuid = p.UUID.String()
+		return p.Username
+	} else {
+		return p.RemoteAddr().String()
 	}
-	return fmt.Sprintf("Player{ Username: %s, UUID: %s, Socket: %s }", username, uuid, p.RemoteAddr())
 }
 
 func NewPlayer(socket socket.Socket) *Player {
@@ -75,6 +74,7 @@ func NewPlayer(socket socket.Socket) *Player {
 		World: nil,
 
 		loadedChunks: make(map[world.ChunkPos]bool),
+		loadedEntities: make(map[int32]bool),
 
 		waitingForPlayers: make(map[uuid.UUID]chan bool),
 		knownPlayers: make(map[uuid.UUID]bool),
@@ -96,6 +96,24 @@ func (p *Player) Change(field, value, flag interface{}) {
 		Value:      value,
 		ChangeFlag: flag,
 	})
+}
+
+//
+// Get a rect with the area that a player can see
+//
+func (p *Player) ViewRect() *math.Rect {
+	return math.NewRectFromPoints(
+		math.NewPoint(
+			p.Position.X() - float64(p.ViewDistance * 16),
+			0,
+			p.Position.Z() - float64(p.ViewDistance * 16),
+		),
+		math.NewPoint(
+			p.Position.X() + float64(p.ViewDistance * 16),
+			256,
+			p.Position.Z() + float64(p.ViewDistance * 16),
+		),
+	)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,30 +167,29 @@ func (p *Player) syncPlayerInfo() {
 
 	// check for any players that we already got
 	for uid, c := range p.waitingForPlayers {
+		// check about this channel
 		select {
-		case _, ok := <-c:
-			if ok {
-				// we are the first to see this change
-				close(c)
-			}
+			case _, ok := <-c:
+				if ok {
+					close(c)
+				}
 
-			// we know about this player
-			delete(p.waitingForPlayers, uid)
-			p.knownPlayers[uid] = true
-		default:
-			// not sent yet, ignore
+				delete(p.waitingForPlayers, uid)
+				p.knownPlayers[uid] = true
+			default:
+				// not sent yet, ignore
 		}
 	}
 
 	// check for any new players
 	if p.joined {
 		pladd = make([]play.PIAddPlayer, 0, len(players))
-		for _, p := range players {
+		for _, pNew := range players {
 			pladd = append(pladd, play.PIAddPlayer{
-				UUID:        p.UUID,
-				Name:        p.Username,
+				UUID:        pNew.UUID,
+				Name:        pNew.Username,
 				Gamemode:    0,
-				Ping:        int32(p.Ping.Milliseconds()),
+				Ping:        int32(pNew.Ping.Milliseconds()),
 			})
 		}
 	} else {
@@ -180,26 +197,26 @@ func (p *Player) syncPlayerInfo() {
 		pladd = make([]play.PIAddPlayer, 0, len(newPlayers))
 		plrem = make([]play.PIRemovePlayer, 0, len(leftPlayers))
 
-		for _, p := range newPlayers {
+		for _, pNew := range newPlayers {
 			pladd = append(pladd, play.PIAddPlayer{
-				UUID:        p.UUID,
-				Name:        p.Username,
+				UUID:        pNew.UUID,
+				Name:        pNew.Username,
 				Gamemode:    0,
-				Ping:        int32(p.Ping),
+				Ping:        int32(pNew.Ping),
 			})
 		}
 
-		for _, p := range leftPlayers {
-			plrem = append(plrem, play.PIRemovePlayer{UUID: p.UUID})
+		for _, pNew := range leftPlayers {
+			plrem = append(plrem, play.PIRemovePlayer{UUID: pNew.UUID})
 		}
 	}
 
 	// update latencies
-	for _, p := range players {
+	for _, pNew := range players {
 		if p.PingChanged {
 			pllat = append(pllat, play.PIUpdateLatency{
-				UUID: p.UUID,
-				Ping: int32(p.Ping),
+				UUID: pNew.UUID,
+				Ping: int32(pNew.Ping),
 			})
 		}
 	}
@@ -209,8 +226,8 @@ func (p *Player) syncPlayerInfo() {
 		// the map
 		done := make(chan bool)
 		p.SendChan(play.PlayerInfo{ AddPlayer: pladd }, done)
-		for _, p := range newPlayers {
-			p.waitingForPlayers[p.UUID] = done
+		for _, pNew := range pladd {
+			p.waitingForPlayers[pNew.UUID] = done
 		}
 	}
 
@@ -268,7 +285,134 @@ func (p *Player) syncChunks() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (p *Player) syncEntities() {
+	// set all entities as not needed
+	for eid := range p.loadedEntities {
+		p.loadedEntities[eid] = false
+	}
 
+	// go over the entities and tick them
+	p.World.ForEntitiesInRange(p.ViewRect(), func(ient entity.IEntity) {
+		// skip current player
+		if ient == p {
+			return
+		}
+
+		// get the entity data
+		e := ient.GetEntity()
+		newEntity := false
+
+		// first check if the entity is known or not
+		if _, ok := p.loadedEntities[e.EID]; ok {
+
+			// this entity is known, tick its position if needed
+			if e.Moved && e.Rotated {
+				p.Send(play.EntityTeleport{
+					EntityID: e.EID,
+					X:        e.Position.X(),
+					Y:        e.Position.Y(),
+					Z:        e.Position.Z(),
+					Yaw:      e.Yaw,
+					Pitch:    e.Pitch,
+					OnGround: e.OnGround,
+				})
+
+				p.Send(play.EntityHeadLook{
+					EntityID: e.EID,
+					HeadYaw:  e.HeadYaw,
+				})
+
+			} else if e.Moved {
+
+				p.Send(play.EntityTeleport{
+					EntityID: e.EID,
+					X:        e.Position.X(),
+					Y:        e.Position.Y(),
+					Z:        e.Position.Z(),
+					Yaw:      e.Yaw,
+					Pitch:    e.Pitch,
+					OnGround: e.OnGround,
+				})
+
+			} else if e.Rotated {
+				p.Send(play.EntityRotation{
+					EntityID: e.EID,
+					Yaw:      e.Yaw,
+					Pitch:    e.Pitch,
+					OnGround: e.OnGround,
+				})
+				p.Send(play.EntityHeadLook{
+					EntityID: e.EID,
+					HeadYaw:  e.HeadYaw,
+				})
+			} else {
+				// nothing happend, just keep reminding the player about
+				// this entity
+				// TODO: do I really need to do this?
+				p.Send(play.EntityMovement{
+					EntityID: e.EID,
+				})
+			}
+
+			// TODO: handle other entity specific stuff
+
+		} else {
+			newEntity = true
+
+			// this entity is unknown, spawn it
+			switch other := ient.(type) {
+				case *Player:
+					// check the client has the player info
+					// about this player before sending it
+					if _, ok := p.knownPlayers[other.UUID]; !ok {
+						return
+					}
+
+					// This is a player, spawn it
+					p.Send(play.SpawnPlayer{
+						EntityID: other.EID,
+						UUID:     other.UUID,
+						X:        other.Position.X(),
+						Y:        other.Position.Y(),
+						Z:        other.Position.Z(),
+						Yaw:      other.Yaw,
+						Pitch:    other.Pitch,
+					})
+
+				default:
+					// This is a mob
+			}
+		}
+
+		// TODO: entity animation
+
+		// TODO: entity equipment
+
+
+		// check if there is metadata to update
+		if newEntity || e.MetadataChanged {
+			p.Send(play.EntityMetadata{
+				EntityID: e.EID,
+				Metadata: e,
+			})
+		}
+
+		// set entity as known
+		p.loadedEntities[e.EID] = true
+	})
+
+	// unload all uneeded entities
+	ids := make([]int32, 0)
+	for eid, val := range p.loadedEntities {
+		if !val {
+			delete(p.loadedEntities, eid)
+			ids = append(ids, eid)
+		}
+	}
+
+	// if there are entities to unload, unload them
+	if len(ids) > 0 {
+		p.Send(play.DestroyEntities{EntityIDs: ids})
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

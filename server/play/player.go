@@ -26,13 +26,17 @@ func HandlePlayerPositionAndRotation(player *game.Player, reader *minecraft.Read
 	player.Change(&player.Position[0], reader.ReadDouble(), &player.Moved)
 	player.Change(&player.Position[1], reader.ReadDouble(), &player.Moved)
 	player.Change(&player.Position[2], reader.ReadDouble(), &player.Moved)
-	player.Change(&player.Yaw, minecraft.ToAngle(reader.ReadFloat()), &player.Rotated)
+	yaw := minecraft.ToAngle(reader.ReadFloat())
+	player.Change(&player.Yaw, yaw, &player.Rotated)
+	player.Change(&player.HeadYaw, yaw, nil)
 	player.Change(&player.Pitch, minecraft.ToAngle(reader.ReadFloat()), &player.Rotated)
 	player.Change(&player.OnGround, reader.ReadBoolean(), &player.OnGroundChanged)
 }
 
 func HandlePlayerRotation(player *game.Player, reader *minecraft.Reader) {
-	player.Change(&player.Yaw, minecraft.ToAngle(reader.ReadFloat()), &player.Rotated)
+	yaw := minecraft.ToAngle(reader.ReadFloat())
+	player.Change(&player.Yaw, yaw, &player.Rotated)
+	player.Change(&player.HeadYaw, yaw, nil)
 	player.Change(&player.Pitch, minecraft.ToAngle(reader.ReadFloat()), &player.Rotated)
 	player.Change(&player.OnGround, reader.ReadBoolean(), &player.OnGroundChanged)
 }

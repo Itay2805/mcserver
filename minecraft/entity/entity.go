@@ -48,7 +48,7 @@ type Entity struct {
 
 	// Identifiers
 	// per-runtime
-	EID					int
+	EID					int32
 	// persistent
 	UUID				uuid.UUID
 

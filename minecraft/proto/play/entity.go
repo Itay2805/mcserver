@@ -16,18 +16,18 @@ import (
 // TODO: Spawn Painting
 
 type SpawnPlayer struct {
-	EntityId	int32
-	UUID		uuid.UUID
-	X			float64
-	Y			float64
-	Z			float64
-	Yaw			minecraft.Angle
-	Pitch		minecraft.Angle
+	EntityID int32
+	UUID     uuid.UUID
+	X        float64
+	Y        float64
+	Z        float64
+	Yaw      minecraft.Angle
+	Pitch    minecraft.Angle
 }
 
 func (r SpawnPlayer) Encode(writer *minecraft.Writer) {
 	writer.WriteVarint(0x05)
-	writer.WriteVarint(r.EntityId)
+	writer.WriteVarint(r.EntityID)
 	writer.WriteUUID(r.UUID)
 	writer.WriteDouble(r.X)
 	writer.WriteDouble(r.Y)
@@ -56,8 +56,6 @@ func (r EntityAnimation) Encode(writer *minecraft.Writer) {
 	writer.WriteVarint(r.EntityId)
 	writer.WriteByte(r.Animation)
 }
-
-// TODO: Entity Position
 
 type EntityPosition struct {
 	EntityId		int32
@@ -98,29 +96,27 @@ func (r EntityPositionAndRotation) Encode(writer *minecraft.Writer) {
 }
 
 type EntityRotation struct {
-	EntityId		int32
-	Yaw				minecraft.Angle
-	Pitch			minecraft.Angle
-	OnGround		bool
+	EntityID int32
+	Yaw      minecraft.Angle
+	Pitch    minecraft.Angle
+	OnGround bool
 }
 
 func (r EntityRotation) Encode(writer *minecraft.Writer) {
-	writer.WriteVarint(0x2A)
-	writer.WriteVarint(r.EntityId)
+	writer.WriteVarint(0x2B)
+	writer.WriteVarint(r.EntityID)
 	writer.WriteAngle(r.Yaw)
 	writer.WriteAngle(r.Pitch)
 	writer.WriteBoolean(r.OnGround)
 }
 
 type EntityMovement struct {
-	EntityId		int32
-	OnGround		bool
+	EntityID int32
 }
 
 func (r EntityMovement) Encode(writer *minecraft.Writer) {
 	writer.WriteVarint(0x2C)
-	writer.WriteVarint(r.EntityId)
-	writer.WriteBoolean(r.OnGround)
+	writer.WriteVarint(r.EntityID)
 }
 
 type DestroyEntities struct {
@@ -148,7 +144,22 @@ func (r EntityHeadLook) Encode(writer *minecraft.Writer) {
 	writer.WriteAngle(r.HeadYaw)
 }
 
-// TODO: Entity Metadata
+type IMetadata interface {
+	WriteMetadata(writer *minecraft.EntityMetadataWriter)
+}
+
+type EntityMetadata struct {
+	EntityID 		int32
+	Metadata		IMetadata
+}
+
+func (r EntityMetadata) Encode(writer *minecraft.Writer) {
+	writer.WriteVarint(0x44)
+	writer.WriteVarint(r.EntityID)
+	ew := writer.StartEntityMetadata()
+	r.Metadata.WriteMetadata(ew)
+	ew.Done()
+}
 
 // TODO: Attach Entity
 
@@ -160,13 +171,23 @@ func (r EntityHeadLook) Encode(writer *minecraft.Writer) {
 
 type EntityTeleport struct {
 	EntityID		int32
-	HeadYaw			minecraft.Angle
+	X				float64
+	Y				float64
+	Z				float64
+	Yaw				minecraft.Angle
+	Pitch			minecraft.Angle
+	OnGround		bool
 }
 
 func (r EntityTeleport) Encode(writer *minecraft.Writer) {
-	writer.WriteVarint(0x3C)
+	writer.WriteVarint(0x57)
 	writer.WriteVarint(r.EntityID)
-	writer.WriteAngle(r.HeadYaw)
+	writer.WriteDouble(r.X)
+	writer.WriteDouble(r.Y)
+	writer.WriteDouble(r.Z)
+	writer.WriteAngle(r.Yaw)
+	writer.WriteAngle(r.Pitch)
+	writer.WriteBoolean(r.OnGround)
 }
 
 // TODO: Entity Properties
