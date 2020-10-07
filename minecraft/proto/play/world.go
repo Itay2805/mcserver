@@ -68,6 +68,17 @@ func (p UnloadChunk) Encode(writer *minecraft.Writer) {
 	writer.WriteInt(p.ChunkZ)
 }
 
+type UpdateViewPosition struct {
+	ChunkX		int32
+	ChunkZ		int32
+}
+
+func (p UpdateViewPosition) Encode(writer *minecraft.Writer) {
+	writer.WriteVarint(0x41)
+	writer.WriteVarint(p.ChunkX)
+	writer.WriteVarint(p.ChunkZ)
+}
+
 type TimeUpdate struct {
 	WorldAge	int64
 	TimeOfDay	int64

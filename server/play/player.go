@@ -1,6 +1,7 @@
 package play
 
 import (
+	"github.com/itay2805/mcserver/config"
 	"github.com/itay2805/mcserver/game"
 	"github.com/itay2805/mcserver/minecraft"
 	"log"
@@ -14,6 +15,11 @@ func HandleClientSettings(player *game.Player, reader *minecraft.Reader) {
 	_ = reader.ReadBoolean() // Chat colors
 	skinMask := reader.ReadByte()
 	mainHand := reader.ReadVarint()
+
+	// max view distance
+	if viewDistance > byte(*config.MaxViewDistance) {
+		viewDistance = byte(*config.MaxViewDistance)
+	}
 
 	player.Change(func() {
 		player.ViewDistance = int(viewDistance)
@@ -38,6 +44,8 @@ func HandlePlayerPosition(player *game.Player, reader *minecraft.Reader) {
 	z := reader.ReadDouble()
 	onGround := reader.ReadBoolean()
 	player.Change(func() {
+		player.PrevPosition = player.Position
+
 		prevX := player.Position[0]
 		prevY := player.Position[1]
 		prevZ := player.Position[2]

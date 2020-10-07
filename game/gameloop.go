@@ -5,6 +5,7 @@ import (
 	"github.com/itay2805/mcserver/minecraft/world/generator/flatgrass"
 	"github.com/itay2805/mcserver/minecraft/world/provider/nullprovider"
 	"log"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -107,11 +108,14 @@ func tickObjects() {
 func StartGameLoop() {
 	log.Println("Starting gameloop")
 
+	// create another thread to compensate for the one we are using now
+	runtime.GOMAXPROCS(runtime.GOMAXPROCS(runtime.NumCPU() + 1))
+	runtime.LockOSThread()
+
 	ticker := time.NewTicker(time.Second / 20)
 	lastLog := time.Now()
 	ticks := 0
 	for range ticker.C {
-
 		// any thing that can't be changed while we are
 		// doing a game tick need to be locked here
 		leftPlayersMutex.Lock()

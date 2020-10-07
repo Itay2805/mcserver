@@ -45,6 +45,7 @@ type Entity struct {
 	Rotated				bool
 	OnGroundChanged 	bool
 
+	PrevPosition		math.Point
 	Position			math.Point
 	// TODO: PositionDelta
 	Velocity 			math.Point

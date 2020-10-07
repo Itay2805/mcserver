@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/itay2805/mcserver/config"
 	"github.com/itay2805/mcserver/math"
 	"github.com/itay2805/mcserver/minecraft"
 	"github.com/itay2805/mcserver/minecraft/entity"
@@ -68,7 +69,7 @@ func (w *World) AddPlayer(player *Player) {
 		Dimension:        		0,
 		HashedSeed: 	  		0,
 		LevelType:        		"default",
-		ViewDistance: 			10,
+		ViewDistance: 			int32(*config.MaxViewDistance),
 		ReducedDebugInfo: 		false,
 		EnableRespawnScreen: 	true,
 	})

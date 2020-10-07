@@ -1,7 +1,9 @@
 package main
 
+import "C"
 import (
 	"flag"
+	_ "github.com/itay2805/mcserver/config"
 	"github.com/itay2805/mcserver/game"
 	"github.com/itay2805/mcserver/server"
 	"log"

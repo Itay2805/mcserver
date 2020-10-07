@@ -8,7 +8,6 @@ import (
 	"github.com/itay2805/mcserver/minecraft/proto/play"
 	"github.com/itay2805/mcserver/minecraft/world"
 	"github.com/itay2805/mcserver/server/socket"
-	"github.com/panjf2000/ants"
 	"log"
 	"reflect"
 	"sync"
@@ -299,20 +298,28 @@ func (p *Player) syncChunks() {
 		p.loadedChunks[pos] = false
 	}
 
+	//// check if changed view position
+	//prevChunk := world.ChunkPos{ int(p.PrevPosition.X()) >> 4, int(p.PrevPosition.Z()) >> 4 }
+	//curChunk := world.ChunkPos{ int(p.Position.X()) >> 4, int(p.Position.Z()) >> 4 }
+	//if prevChunk.X != curChunk.X || prevChunk.Z != curChunk.Z {
+	//	log.Println("Test")
+	//	p.Send(play.UpdateViewPosition{
+	//		ChunkX: int32(curChunk.X),
+	//		ChunkZ: int32(curChunk.Z),
+	//	})
+	//}
+
 	// go over all the chunks in the view distance
-	forEachChunkInRange(int(p.Position.X()) >> 4, int(p.Position.Z()) >> 4, p.ViewDistance,
-	func(x, z int) {
+	forEachChunkInRange(int(p.Position.X()) >> 4, int(p.Position.Z()) >> 4, p.ViewDistance, func(x, z int) {
 		pos := world.ChunkPos{X: x, Z: z}
 
 		if _, ok := p.loadedChunks[pos]; !ok {
 			// this chunk is not loaded at the player
 			// load the chunk in an async manner
-			_ = ants.Submit(func() {
-				p.World.SendChunkToPlayer(x, z, p)
-			})
+			go p.World.SendChunkToPlayer(x, z, p)
 
 		} else {
-			changes := p.World.BlockChanges[world.ChunkPos{ X: x, Z: z }]
+			changes := p.World.BlockChanges[pos]
 			if len(changes) > 0 {
 				if len(changes) > 1 {
 					// multi-block change
