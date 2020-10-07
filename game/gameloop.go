@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/google/uuid"
+	"github.com/itay2805/mcserver/minecraft/world"
 	"github.com/itay2805/mcserver/minecraft/world/generator/flatgrass"
 	"github.com/itay2805/mcserver/minecraft/world/provider/nullprovider"
 	"log"
@@ -138,6 +139,10 @@ func StartGameLoop() {
 		// changes that happened to the world
 		// TODO: for each world
 		OurWorld.syncState()
+
+		// once the world has been synced we are going to process all
+		// of the light updates that have happened this tick
+		world.ProcessLightUpdates()
 
 		// finally sync all of the clients states, this is called
 		// after the server did all of its processing

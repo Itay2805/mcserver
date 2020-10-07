@@ -110,7 +110,14 @@ func (c *Chunk) GetSkyLight(x, y, z int) int {
 		return 0
 	}
 
-	return int(sec[getSectionBlockIndex(x, y, z)])
+	idx := getSectionBlockIndex(x, y, z)
+	half := idx >> 1
+
+	if (idx & 1) == 1 {
+		return int(sec[half] >> 4)
+	} else {
+		return int(sec[half] & 0xf)
+	}
 }
 
 func (c *Chunk) SetSkyLight(x, y, z int, light int) {
@@ -124,15 +131,14 @@ func (c *Chunk) SetSkyLight(x, y, z int, light int) {
 		c.skyLightSections[getLightSection(y)] = sec
 	}
 
+	val := uint8(light & 0xf)
 	idx := getSectionBlockIndex(x, y, z)
 	half := idx >> 1
 
-	if idx & 1 == 1 {
-		sec[half] &= 0x0F
-		sec[half] |= uint8((light & 0xf) << 4)
+	if (idx & 1) == 1 {
+		sec[half] = (sec[half] & 0x0f) | (val << 4)
 	} else {
-		sec[half] &= 0xF0
-		sec[half] |= uint8(light & 0xf)
+		sec[half] = (sec[half] & 0xf0) | val
 	}
 }
 
@@ -142,7 +148,14 @@ func (c *Chunk) GetBlockLight(x, y, z int) int {
 		return 0
 	}
 
-	return int(sec[getSectionBlockIndex(x, y, z)])
+	idx := getSectionBlockIndex(x, y, z)
+	half := idx >> 1
+
+	if (idx & 1) == 1 {
+		return int(sec[half] >> 4)
+	} else {
+		return int(sec[half] & 0xf)
+	}
 }
 
 func (c *Chunk) SetBlockLight(x, y, z int, light int) {
@@ -156,15 +169,14 @@ func (c *Chunk) SetBlockLight(x, y, z int, light int) {
 		c.blockLightSections[getLightSection(y)] = sec
 	}
 
+	val := uint8(light & 0xf)
 	idx := getSectionBlockIndex(x, y, z)
 	half := idx >> 1
 
-	if idx & 1 == 1 {
-		sec[half] &= 0x0F
-		sec[half] |= uint8((light & 0xf) << 4)
+	if (idx & 1) == 1 {
+		sec[half] = (sec[half] & 0x0f) | (val << 4)
 	} else {
-		sec[half] &= 0xF0
-		sec[half] |= uint8(light & 0xf)
+		sec[half] = (sec[half] & 0xf0) | val
 	}
 }
 
@@ -289,38 +301,44 @@ func (c *Chunk) MakeChunkDataPacket(writer *minecraft.Writer) {
 
 // TODO: maybe cache this
 func (c *Chunk) MakeUpdateLightPacket(writer *minecraft.Writer) {
-	// write the basic data
-	writer.WriteVarint(0x25)
-	writer.WriteVarint(int32(c.X))
-	writer.WriteVarint(int32(c.Z))
-
 	// prepare the masks
 	// NOTE: This assumes the amount of sky light sections is
 	// 		 the same as block light sections, might need to be
 	//		 changed in the future
 	skyLightMask := int32(0)
 	blockLightMask := int32(0)
-	emptySkyLightMask := int32(0)
-	emptyBlockLightMask := int32(0)
+	count := 0
 	for i := 0; i < NumLightSections; i++ {
 		if c.skyLightSections[i] != nil {
 			skyLightMask |= 1 << i
-		} else {
-			emptySkyLightMask |= 1 << i
+			count++
 		}
 
 		if c.blockLightSections[i] != nil {
 			blockLightMask |= 1 << i
-		} else {
-			emptyBlockLightMask |= 1 << i
+			count++
 		}
 	}
+
+	// we already know everything so just grow it properly
+	writer.Grow(
+		common.VarintSize(0x25) +
+			common.VarintSize(int32(c.X)) +
+			common.VarintSize(int32(c.Z)) +
+			common.VarintSize(skyLightMask) + common.VarintSize(blockLightMask) +
+			common.VarintSize(0) + common.VarintSize(0) +
+			(common.VarintSize(2048) + 2048) * 18 * 2)
+
+	// write the basic data
+	writer.WriteVarint(0x25)
+	writer.WriteVarint(int32(c.X))
+	writer.WriteVarint(int32(c.Z))
 
 	// write the masks
 	writer.WriteVarint(skyLightMask)
 	writer.WriteVarint(blockLightMask)
-	writer.WriteVarint(emptySkyLightMask)
-	writer.WriteVarint(emptyBlockLightMask)
+	writer.WriteVarint(0)
+	writer.WriteVarint(0)
 
 	// write out all of the sky light arrays
 	for _, sec := range c.skyLightSections {

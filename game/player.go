@@ -298,17 +298,6 @@ func (p *Player) syncChunks() {
 		p.loadedChunks[pos] = false
 	}
 
-	//// check if changed view position
-	//prevChunk := world.ChunkPos{ int(p.PrevPosition.X()) >> 4, int(p.PrevPosition.Z()) >> 4 }
-	//curChunk := world.ChunkPos{ int(p.Position.X()) >> 4, int(p.Position.Z()) >> 4 }
-	//if prevChunk.X != curChunk.X || prevChunk.Z != curChunk.Z {
-	//	log.Println("Test")
-	//	p.Send(play.UpdateViewPosition{
-	//		ChunkX: int32(curChunk.X),
-	//		ChunkZ: int32(curChunk.Z),
-	//	})
-	//}
-
 	// go over all the chunks in the view distance
 	forEachChunkInRange(int(p.Position.X()) >> 4, int(p.Position.Z()) >> 4, p.ViewDistance, func(x, z int) {
 		pos := world.ChunkPos{X: x, Z: z}

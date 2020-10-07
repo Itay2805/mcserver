@@ -114,6 +114,7 @@ func (w *World) syncBlockChanges() {
 
 		for _, b := range br {
 			c.SetBlockState(int(b.BlockX), int(b.BlockY), int(b.BlockZ), b.BlockState)
+			world.QueueLightUpdate(w.World, c, int(b.BlockX), int(b.BlockY), int(b.BlockZ))
 		}
 	}
 }
@@ -132,12 +133,20 @@ func (w *World) SendChunkToPlayer(x, z int, p *Player) {
 	c := w.LoadChunk(x, z)
 
 	// the chunk itself
-	writer := minecraft.Writer{}
-	c.MakeChunkDataPacket(&writer)
+	{
+		writer := &minecraft.Writer{}
+		c.MakeChunkDataPacket(writer)
 
-	// block entities
-	writer.WriteVarint(0)
+		// TODO: block entities
+		writer.WriteVarint(0)
 
-	// send the data
-	p.SendRaw(writer.Bytes())
+		p.SendRaw(writer.Bytes())
+	}
+
+	// send the light update
+	{
+		writer := &minecraft.Writer{}
+		c.MakeUpdateLightPacket(writer)
+		p.SendRaw(writer.Bytes())
+	}
 }

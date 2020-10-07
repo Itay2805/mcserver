@@ -87,28 +87,30 @@ func (writer *Writer) WriteJson(val interface{}) {
 // TODO: writeIdentifier
 
 func (writer *Writer) WriteVarint(val int32) {
+	raw := uint32(val)
 	for {
-		temp := byte(val & 0b01111111)
-		val >>= 7
-		if val != 0 {
+		temp := byte(raw & 0b01111111)
+		raw >>= 7
+		if raw != 0 {
 			temp |= 0b10000000
 		}
 		writer.WriteByte(temp)
-		if val == 0 {
+		if raw == 0 {
 			break
 		}
 	}
 }
 
 func (writer *Writer) WriteVarlong(val int64) {
+	raw := uint64(val)
 	for {
-		temp := byte(val & 0b01111111)
-		val >>= 7
-		if val != 0 {
+		temp := byte(raw & 0b01111111)
+		raw >>= 7
+		if raw != 0 {
 			temp |= 0b10000000
 		}
 		writer.WriteByte(temp)
-		if val == 0 {
+		if raw == 0 {
 			break
 		}
 	}

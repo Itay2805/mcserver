@@ -88,6 +88,7 @@ func (w *World) LoadChunk(x, z int) *chunk.Chunk {
 
 	// generate a new one
 	c = w.Generator.GenerateChunk(x, z)
+	w.lightChunk(c)
 	w.chunks.Store(ChunkPos{ x, z }, c)
 	return c
 }
