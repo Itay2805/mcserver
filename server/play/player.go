@@ -29,7 +29,6 @@ func HandleKeepAlive(player *game.Player, reader *minecraft.Reader) {
 	player.Change(func() {
 		player.Ping = gotIt.Sub(time.Unix(0, keepAliveId))
 		player.PingChanged = true
-		log.Println(player.Ping)
 	})
 }
 

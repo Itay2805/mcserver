@@ -26,8 +26,7 @@ type PendingChange struct {
 type PlayerActionType int
 
 const (
-	PlayerActionNone = PlayerActionType(iota)
-	PlayerActionDig
+	PlayerActionDig = PlayerActionType(iota)
 )
 
 type PlayerAction struct {
