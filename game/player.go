@@ -51,6 +51,7 @@ type Player struct {
 
 	// ping related
 	Ping				time.Duration
+	LastKeepAlive		time.Time
 	PingChanged			bool
 
 	// The world we are in
@@ -89,6 +90,10 @@ func NewPlayer(socket socket.Socket) *Player {
 
 		changeQueue: queue.New(),
 		changeMutex: sync.Mutex{},
+
+		Ping: -1,
+		LastKeepAlive: time.Now(),
+		PingChanged: false,
 
 		World: nil,
 
@@ -132,13 +137,12 @@ func (p *Player) ViewRect() *math.Rect {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (p *Player) syncChanges() {
-	p.changeMutex.Lock()
-	defer p.changeMutex.Unlock()
-
 	// apply all changes
+	p.changeMutex.Lock()
 	for p.changeQueue.Length() > 0 {
 		p.changeQueue.Remove().(func())()
 	}
+	p.changeMutex.Unlock()
 
 	// if moved update the entity
 	// position and bounding box
@@ -157,14 +161,21 @@ func (p *Player) tickDig(position minecraft.Position) {
 	// get the prev block
 	blkstate := p.World.GetBlockState(position.X, position.Y, position.Z)
 
-	// TODO: queue world update
+	// register a block change
+	chunkX := position.X >> 4
+	chunkZ := position.Z >> 4
+	pos := world.ChunkPos{ X: chunkX, Z: chunkZ }
+	p.World.BlockChanges[pos] = append(p.World.BlockChanges[pos], play.BlockRecord{
+		BlockX:     byte(position.X & 0xf),
+		BlockZ:     byte(position.Z & 0xf),
+		BlockY:     byte(position.Y),
+		BlockState: 0,
+	})
 
 	// send the sound and animation to other players which are in a 16 block range from
 	// the given effect, farther than that they will just not be able to see it
-	soundDistance := math.NewRect(position.ToPoint().SubScalar(16), [3]float64{ 16, 16, 16 })
+	soundDistance := math.NewRect(position.ToPoint().SubScalar(16), [3]float64{ 32, 32, 32 })
 	p.World.ForEntitiesInRange(soundDistance, func(ient entity.IEntity) {
-		log.Println(ient)
-
 		// ignore local player, their client does this anyways
 		if ient == p {
 			return
@@ -172,7 +183,6 @@ func (p *Player) tickDig(position minecraft.Position) {
 
 		// ignore non-players
 		if other, ok := ient.(*Player); ok {
-			log.Println("Sending to", other)
 			other.Send(play.Effect{
 				EffectID:              play.EffectBlockBreak,
 				Location:              position,
@@ -244,7 +254,7 @@ func (p *Player) syncPlayerInfo() {
 				UUID:        pNew.UUID,
 				Name:        pNew.Username,
 				Gamemode:    0,
-				Ping:        int32(pNew.Ping),
+				Ping:        int32(pNew.Ping.Milliseconds()),
 			})
 		}
 
@@ -258,7 +268,7 @@ func (p *Player) syncPlayerInfo() {
 		if p.PingChanged {
 			pllat = append(pllat, play.PIUpdateLatency{
 				UUID: pNew.UUID,
-				Ping: int32(pNew.Ping),
+				Ping: int32(pNew.Ping.Milliseconds()),
 			})
 		}
 	}
@@ -303,7 +313,27 @@ func (p *Player) syncChunks() {
 			})
 
 		} else {
-			// TODO: handle block updates
+			changes := p.World.BlockChanges[world.ChunkPos{ X: x, Z: z }]
+			if len(changes) > 0 {
+				if len(changes) > 1 {
+					// multi-block change
+					p.Send(play.MultiBlockChange{
+						ChunkX:  int32(x),
+						ChunkZ:  int32(z),
+						Records: changes,
+					})
+				} else {
+					// single block change
+					p.Send(play.BlockChange{
+						Location: minecraft.Position{
+							X: (x << 4) | int(changes[0].BlockX),
+							Y: (z << 4) | int(changes[0].BlockZ),
+							Z: int(changes[0].BlockY),
+						},
+						BlockID:  changes[0].BlockState,
+					})
+				}
+			}
 		}
 
 		// mark this chunk as needed
@@ -466,6 +496,13 @@ func (p *Player) syncClient() {
 	p.syncPlayerInfo()
 	p.syncChunks()
 	p.syncEntities()
+
+	// send keepalive if needed
+	if time.Since(p.LastKeepAlive) > time.Second * 25 {
+		now := time.Now()
+		p.LastKeepAlive = now
+		p.Send(play.KeepAlive{ KeepAliveId: now.UnixNano() })
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

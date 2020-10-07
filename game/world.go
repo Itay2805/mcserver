@@ -28,14 +28,18 @@ type World struct {
 	// the minecraft world
 	*world.World
 
+	// The block changes in this world
+	BlockChanges		map[world.ChunkPos][]play.BlockRecord
+
 	// the entities
-	entities	*math.Rtree
+	entities			*math.Rtree
 }
 
 func NewWorld(generator world.Generator, provider world.Provider) *World {
 	return &World{
 		World:    world.NewWorld(provider, generator),
 		entities: math.NewRTree(10, 2000),
+		BlockChanges: make(map[world.ChunkPos][]play.BlockRecord),
 	}
 }
 
@@ -96,6 +100,26 @@ func (w *World) ForEntitiesInRange(rect *math.Rect, cb func(entity entity.IEntit
 	for _, obj := range w.entities.SearchIntersect(rect) {
 		cb(obj.(entity.IEntity))
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Server state sync
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (w *World) syncBlockChanges() {
+	// apply block changes
+	for cpos, br := range OurWorld.BlockChanges {
+		c := OurWorld.GetChunk(cpos.X, cpos.Z)
+
+		for _, b := range br {
+			c.SetBlockState(int(b.BlockX), int(b.BlockY), int(b.BlockZ), b.BlockState)
+		}
+	}
+}
+
+func (w *World) syncState() {
+	// sync the block changes
+	w.syncBlockChanges()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,6 +4,7 @@ import (
 	"github.com/itay2805/mcserver/game"
 	"github.com/itay2805/mcserver/minecraft"
 	"log"
+	"time"
 )
 
 func HandleClientSettings(player *game.Player, reader *minecraft.Reader) {
@@ -19,6 +20,16 @@ func HandleClientSettings(player *game.Player, reader *minecraft.Reader) {
 		player.SkinMask = skinMask
 		player.MainHand = byte(mainHand)
 		player.MetadataChanged = true
+	})
+}
+
+func HandleKeepAlive(player *game.Player, reader *minecraft.Reader) {
+	gotIt := time.Now()
+	keepAliveId := reader.ReadLong()
+	player.Change(func() {
+		player.Ping = gotIt.Sub(time.Unix(0, keepAliveId))
+		player.PingChanged = true
+		log.Println(player.Ping)
 	})
 }
 
@@ -109,6 +120,7 @@ func HandlePlayerDigging(player *game.Player, reader *minecraft.Reader) {
 	switch status {
 		// queue a player dig action
 		case 0:
+			// register that the player digged
 			player.Change(func() {
 				player.ActionQueue.Add(game.PlayerAction{
 					Type: game.PlayerActionDig,

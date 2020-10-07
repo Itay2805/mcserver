@@ -45,7 +45,8 @@ var packetHandlers = [][]PacketHandler {
 		// 0x0C
 		// 0x0D
 		// 0x0E
-		// 0x0F
+		0x0F: play.HandleKeepAlive,
+		//0x10:
 		0x11: play.HandlePlayerPosition,
 		0x12: play.HandlePlayerPositionAndRotation,
 		0x13: play.HandlePlayerRotation,

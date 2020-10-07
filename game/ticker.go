@@ -38,7 +38,7 @@ func insertTickObject(el tickObject) {
 // Tick all the objects that need to be ticked
 // on this tick
 //
-func tickAllObjects() {
+func tickScheduledObjects() {
 	var next *list.Element
 	for e := tickedObjects.Front(); e != nil; e = next {
 		next = e.Next()

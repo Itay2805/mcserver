@@ -45,17 +45,12 @@ type Chunk struct {
 	// light related data
 	skyLightSections	[NumLightSections]*[LightVolume]uint8
 	blockLightSections	[NumLightSections]*[LightVolume]uint8
-
-	// height maps
-	// TODO: do we need to generate the other height maps as well?
-	motionBlocking 		*common.CompactArray
 }
 
 func NewChunk(x, z int) *Chunk {
 	return &Chunk{
 		X:                  x,
 		Z:                  z,
-		motionBlocking:     common.NewCompactArray(9, 256),
 	}
 }
 
@@ -232,11 +227,9 @@ func (c *Chunk) MakeChunkDataPacket(writer *minecraft.Writer) {
 	// write the headers
 	writer.WriteVarint(primaryBitMask)
 
-	// write out the heightmaps
-	// TODO: IS THIS ACTUALLY NEEDED?
+	// we don't send height maps to the client
 	nbt := writer.StartNBT()
 	nbt.StartCompound("")
-	//nbt.PushLongArray(c.motionBlocking.Values, "MOTION_BLOCKING")
 	nbt.EndCompound()
 
 	// Write the biomes

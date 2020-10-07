@@ -54,12 +54,6 @@ var OurWorld = NewWorld(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func syncServerState() {
-	// sync any changes made by the clients in
-	// the last tick
-	for _, p := range players {
-		p.syncChanges()
-	}
-
 	// add all new players to the world
 	for _, p := range newPlayers {
 		OurWorld.AddPlayer(p)
@@ -73,6 +67,12 @@ func syncServerState() {
 		delete(players, p.UUID)
 		p.World.RemovePlayer(p)
 		playerCount--
+	}
+
+	// sync any changes made by the clients in
+	// the last tick
+	for _, p := range players {
+		p.syncChanges()
 	}
 }
 
@@ -93,7 +93,8 @@ func cleanupTick() {
 	leftPlayers = nil
 }
 
-func tickAllPlayers() {
+func tickObjects() {
+	// all the players, will process their actions and whatever they did on the world
 	for _, p := range players {
 		p.tick()
 	}
@@ -121,13 +122,18 @@ func StartGameLoop() {
 		// want to know about this tick
 		syncServerState()
 
-		// process all of the player actions
-		tickAllPlayers()
+		// process all of the objects that need to be ticked
+		// at all time
+		tickObjects()
 
-		// cause all the objects that need to run this tick to run
-		// note that some objects (like player actions) do not run
+		// tick all the objects that have been scheduled for a tick on
 		// this tick
-		tickAllObjects()
+		tickScheduledObjects()
+
+		// once all the ticks have been passed we can modify all the
+		// changes that happened to the world
+		// TODO: for each world
+		OurWorld.syncState()
 
 		// finally sync all of the clients states, this is called
 		// after the server did all of its processing
