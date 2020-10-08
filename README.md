@@ -4,6 +4,8 @@ This is a minecraft server written from scratch in Go!
 
 The goal is to create a full SMP vanilla server which will hopefully not be as heavy as the official one...
 
+If you have any questions feel free to message me on discord `itay#2805`
+
 ## Features
 
 Currently the focus is getting creative mode only fully working with all the block updates and such, 
