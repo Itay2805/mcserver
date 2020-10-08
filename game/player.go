@@ -145,9 +145,10 @@ func (p *Player) UpdateInventory(slot int, item *play.Slot) {
 		p.EquipmentChanged |= 1 << index
 	}
 
-	// if removed then make sure the client
-	// knows we removed it
-	if item == nil {
+	// if not the down slots and this is a remove
+	// item then send back a set no item, this is
+	// needed when clearing inventory in creative
+	if item == nil && !(36 <= slot && slot <= 44) {
 		p.Send(play.SetSlot{
 			WindowID: -2,
 			Slot:     int16(slot),

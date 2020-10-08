@@ -54,7 +54,6 @@ type SetSlot struct {
 	SlotData	*Slot
 }
 
-
 func (s SetSlot) Encode(writer *minecraft.Writer) {
 	writer.WriteVarint(0x17)
 	writer.WriteByte(byte(s.WindowID))
