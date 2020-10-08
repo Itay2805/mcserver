@@ -40,6 +40,7 @@ func HandleCreativeInventoryAction(player *game.Player, reader *minecraft.Reader
 			NBT:       nbt,
 		}
 
+
 		player.Change(func() {
 			player.UpdateInventory(int(slot), newSlot)
 		})

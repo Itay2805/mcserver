@@ -4,7 +4,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/itay2805/mcserver/math"
 	"github.com/itay2805/mcserver/minecraft"
+	"github.com/itay2805/mcserver/minecraft/block"
 	"github.com/itay2805/mcserver/minecraft/entity"
+	"github.com/itay2805/mcserver/minecraft/item"
 	"github.com/itay2805/mcserver/minecraft/proto/play"
 	"github.com/itay2805/mcserver/minecraft/world"
 	"github.com/itay2805/mcserver/server/socket"
@@ -26,7 +28,17 @@ type PlayerActionType int
 
 const (
 	PlayerActionDig = PlayerActionType(iota)
+	PlayerActionPlace
 )
+
+type BlockPlacement struct {
+	Hand 				int32
+	Location 			minecraft.Position
+	Face				minecraft.Face
+	CursorPositionX		float32
+	CursorPositionY		float32
+	CursorPositionZ		float32
+}
 
 type PlayerAction struct {
 	Type	PlayerActionType
@@ -69,6 +81,11 @@ type Player struct {
 	lastSoundTime		time.Time
 
 	ActionQueue			*queue.Queue
+
+	// the inventory of the player
+	//	https://wiki.vg/images/1/13/Inventory-slots.png
+	HeldItemIndex	int
+	Inventory		[46]*play.Slot
 }
 
 func (p *Player) String() string  {
@@ -103,6 +120,8 @@ func NewPlayer(socket socket.Socket) *Player {
 		joined: true,
 
 		ActionQueue: queue.New(),
+
+		HeldItemIndex: 36,
 	}
 }
 
@@ -156,11 +175,6 @@ func (p *Player) UpdateInventory(slot int, item *play.Slot) {
 		})
 	}
 }
-
-// this is used when there is data from the server that should
-// be updated on the user
-//func (p *Player) SetInventory(slot int, item *play.Slot) {
-//}
 
 func (p *Player) Change(cb func()) {
 	p.changeMutex.Lock()
@@ -252,12 +266,52 @@ func (p *Player) tickDig(position minecraft.Position) {
 	})
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (p *Player) tickPlace(placement BlockPlacement) {
+	// get the action position
+	blockPos := placement.Location.ApplyFace(placement.Face)
+
+	// Get the block and set the animation
+	var itm *item.Item
+	if placement.Hand == 0 {
+		itm = item.GetById(int(p.Inventory[p.HeldItemIndex].ItemID))
+		p.Animation = play.AnimationSwingMainHand
+	} else {
+		itm = item.GetById(int(p.Inventory[45].ItemID))
+		p.Animation = play.AnimationSwingOffhand
+	}
+
+	// make sure the item is a block
+	blk := block.FromItem(itm)
+	if blk != nil {
+		// register a block change
+		chunkX := blockPos.X >> 4
+		chunkZ := blockPos.Z >> 4
+		pos := world.ChunkPos{ X: chunkX, Z: chunkZ }
+		p.World.BlockChanges[pos] = append(p.World.BlockChanges[pos], play.BlockRecord{
+			BlockX:     byte(blockPos.X & 0xf),
+			BlockZ:     byte(blockPos.Z & 0xf),
+			BlockY:     byte(blockPos.Y),
+			BlockState: blk.DefaultStateId,
+		})
+	} else {
+		log.Println(p, "Tried to place non-block item", itm)
+	}
+
+	// TODO: block placement sound (kinda complicated...)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 func (p *Player) tick() {
 	for p.ActionQueue.Length() > 0 {
 		action := p.ActionQueue.Remove().(PlayerAction)
 		switch action.Type {
-			case PlayerActionDig:
-				p.tickDig(action.Data.(minecraft.Position))
+		case PlayerActionDig:
+			p.tickDig(action.Data.(minecraft.Position))
+		case  PlayerActionPlace:
+			p.tickPlace(action.Data.(BlockPlacement))
 		}
 	}
 }
@@ -381,8 +435,8 @@ func (p *Player) syncChunks() {
 					p.Send(play.BlockChange{
 						Location: minecraft.Position{
 							X: (x << 4) | int(changes[0].BlockX),
-							Y: (z << 4) | int(changes[0].BlockZ),
-							Z: int(changes[0].BlockY),
+							Y: int(changes[0].BlockY),
+							Z: (z << 4) | int(changes[0].BlockZ),
 						},
 						BlockID:  changes[0].BlockState,
 					})

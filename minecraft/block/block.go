@@ -1,6 +1,9 @@
 package block
 
-import "github.com/itay2805/mcserver/minecraft/item"
+import (
+	"fmt"
+	"github.com/itay2805/mcserver/minecraft/item"
+)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Base block type
@@ -25,7 +28,14 @@ type Block struct {
 	EmitLight		int
 }
 
+func (b *Block) String() string {
+	return fmt.Sprintf("Block{ Name: \"%s\" }", b.Name)
+}
+
 func FromItem(item *item.Item) *Block {
+	if item.ID > len(blockByItemId) {
+		return nil
+	}
 	return blockByItemId[item.ID]
 }
 

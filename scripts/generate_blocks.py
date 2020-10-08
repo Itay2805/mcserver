@@ -42,7 +42,7 @@ for block in blocks:
     print(f"\tId: {block['id']},")
     print(f"\tName: \"{block['name']}\",")
     print(f"\tDefaultStateId: {block['defaultState']},")
-    print(f"\tSolid: {'false' if block['boundingBox'] == 'nullprovider' else 'true'},")
+    print(f"\tSolid: {'false' if block['boundingBox'] == 'empty' else 'true'},")
     print(f"\tTransparent: {'true' if block['transparent'] else 'false'},")
     print(f"\tFilterLight: {block['filterLight']},")
     print(f"\tEmitLight: {block['emitLight']},")

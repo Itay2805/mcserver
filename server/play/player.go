@@ -193,3 +193,29 @@ func HandleAnimation(player *game.Player, reader *minecraft.Reader) {
 		log.Println("HandleAnimation:", player, "unknown hand", hand)
 	}
 }
+
+func HandlePlayerBlockPlacement(player *game.Player, reader *minecraft.Reader) {
+	hand := reader.ReadVarint()
+	location := reader.ReadPosition()
+	face := minecraft.Face(reader.ReadVarint())
+	cursorPositionX := reader.ReadFloat()
+	cursorPositionY := reader.ReadFloat()
+	cursorPositionZ := reader.ReadFloat()
+	_ = reader.ReadBoolean()
+
+	data := game.BlockPlacement{
+		Hand:            hand,
+		Location:        location,
+		Face:            face,
+		CursorPositionX: cursorPositionX,
+		CursorPositionY: cursorPositionY,
+		CursorPositionZ: cursorPositionZ,
+	}
+
+	player.Change(func() {
+		player.ActionQueue.Add(game.PlayerAction{
+			Type: game.PlayerActionPlace,
+			Data: data,
+		})
+	})
+}

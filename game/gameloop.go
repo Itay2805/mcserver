@@ -89,6 +89,8 @@ func cleanupTick() {
 		p.cleanupTick()
 	}
 
+	OurWorld.cleanup()
+
 	// finished updating players
 	// for this tick
 	newPlayers = nil

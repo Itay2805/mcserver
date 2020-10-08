@@ -74,7 +74,7 @@ var packetHandlers = [][]PacketHandler {
 		// 0x29
 		0x2A: play.HandleAnimation,
 		// 0x2B
-		// 0x2C
+		0x2C: play.HandlePlayerBlockPlacement,
 		// 0x2D
 		// 0x2E
 		// 0x2F
