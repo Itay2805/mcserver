@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/itay2805/mcserver/math"
 	"github.com/itay2805/mcserver/minecraft"
+	"github.com/itay2805/mcserver/minecraft/proto/play"
 )
 
 const (
@@ -14,16 +15,24 @@ const (
 type Player struct {
 	Living
 
+	// username of the player
+	Username		string
+
 	// visual
-	SkinMask	byte
-	MainHand	byte
+	SkinMask		byte
+	MainHand		byte
 
-	// Action
-	Flying		bool
+	// Action related
+	Flying			bool
 
-	Username	string
-	Health		float32
-	Food		float32
+	// The stats of the player
+	Health			float32
+	Food			float32
+
+	// the inventory of the player
+	//	https://wiki.vg/images/1/13/Inventory-slots.png
+	HeldItemIndex	int
+	Inventory		[46]*play.Slot
 }
 
 // The player entity type

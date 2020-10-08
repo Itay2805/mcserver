@@ -106,6 +106,61 @@ func NewPlayer(socket socket.Socket) *Player {
 	}
 }
 
+func (p *Player) ChangeHeldItem(slot int) {
+	// change the index of the held item
+	p.HeldItemIndex = slot + 36
+	p.Equipment[0] = p.Inventory[p.HeldItemIndex]
+	p.EquipmentChanged |= 1
+}
+
+// this is used when there is data from the player that should
+// be updated on the server, this will also make sure to give
+// back the player a confirmation about this
+func (p *Player) UpdateInventory(slot int, item *play.Slot) {
+	// set it
+	p.Inventory[slot] = item
+
+	// check if need to update the equipment of the
+	// entity
+	index := -1
+
+	switch slot {
+		case p.HeldItemIndex:
+			index = 0
+		case 45:
+			index = 1
+		case 8:
+			index = 2
+		case 7:
+			index = 3
+		case 6:
+			index = 4
+		case 5:
+			index = 5
+
+	}
+
+	if index != -1 {
+		p.Equipment[index] = p.Inventory[slot]
+		p.EquipmentChanged |= 1 << index
+	}
+
+	// if removed then make sure the client
+	// knows we removed it
+	if item == nil {
+		p.Send(play.SetSlot{
+			WindowID: -2,
+			Slot:     int16(slot),
+			SlotData: nil,
+		})
+	}
+}
+
+// this is used when there is data from the server that should
+// be updated on the user
+//func (p *Player) SetInventory(slot int, item *play.Slot) {
+//}
+
 func (p *Player) Change(cb func()) {
 	p.changeMutex.Lock()
 	defer p.changeMutex.Unlock()
@@ -452,8 +507,21 @@ func (p *Player) syncEntities() {
 
 		// TODO: entity animation
 
-		// TODO: entity equipment
+		// check if there is equipment to update
+		if newEntity || e.EquipmentChanged != 0 {
+			for i, eq := range e.Equipment {
+				if (e.EquipmentChanged & (1 << i)) == 0 {
+					continue
+				}
 
+				// send a fake item that looks the same
+				p.Send(play.EntityEquipment{
+					EntityID: e.EID,
+					Slot:     int32(i),
+					Item:     eq.CreateFake(),
+				})
+			}
+		}
 
 		// check if there is metadata to update
 		if newEntity || e.MetadataChanged {

@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/itay2805/mcserver/math"
 	"github.com/itay2805/mcserver/minecraft"
+	"github.com/itay2805/mcserver/minecraft/proto/play"
 )
 
 type Type struct {
@@ -65,6 +66,10 @@ type Entity struct {
 
 	// the bounds of the entity
 	bounds				*math.Rect
+
+	// The entity equipment
+	Equipment			[6]*play.Slot
+	EquipmentChanged	int
 }
 
 func (e *Entity) UpdateBounds() {

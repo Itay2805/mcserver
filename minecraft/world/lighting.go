@@ -51,7 +51,7 @@ func (w *World) lightChunk(c *chunk.Chunk) {
 
 			currFilter := 15
 			for y := 254; y >= 0; y-- {
-				typ := block.GetBlockByStateId(c.GetBlockState(x, y, z))
+				typ := block.GetByStateId(c.GetBlockState(x, y, z))
 
 				if currFilter > 0 {
 					currFilter -= typ.FilterLight
@@ -110,7 +110,7 @@ func max(nums ...int) int {
 // This function will do a sky light update from the given block in
 // a flood fill manner
 func updateSkylight(q *queue.Queue, w *World, c *chunk.Chunk, x, y, z int) {
-	typ := block.GetBlockByStateId(c.GetBlockState(x, y, z))
+	typ := block.GetByStateId(c.GetBlockState(x, y, z))
 	light := 0
 
 	if typ.FilterLight == 15 {
@@ -254,7 +254,7 @@ func updateSkylight(q *queue.Queue, w *World, c *chunk.Chunk, x, y, z int) {
 }
 
 func updateBlockLight(q *queue.Queue, w *World, c *chunk.Chunk, x, y, z int) {
-	typ := block.GetBlockByStateId(c.GetBlockState(x, y, z))
+	typ := block.GetByStateId(c.GetBlockState(x, y, z))
 
 	light := 0
 

@@ -165,7 +165,27 @@ func (r EntityMetadata) Encode(writer *minecraft.Writer) {
 
 // TODO: Entity Velocity
 
-// TODO: Entity Equipment
+const (
+	EquipmentMainHand = int32(iota)
+	EquipmentOffHand
+	EquipmentBoots
+	EquipmentLeggings
+	EquipmentChestplate
+	EquipmentHelmet
+)
+
+type EntityEquipment struct {
+	EntityID	int32
+	Slot		int32
+	Item		*Slot
+}
+
+func (r EntityEquipment) Encode(writer *minecraft.Writer) {
+	writer.WriteVarint(0x47)
+	writer.WriteVarint(r.EntityID)
+	writer.WriteVarint(r.Slot)
+	r.Item.Encode(writer)
+}
 
 // TODO: Entity Sound Effect
 
