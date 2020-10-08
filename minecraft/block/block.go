@@ -15,9 +15,14 @@ type Block struct {
 	Id				int
 	Name			string
 
-	// The flatgrass state id for this block
-	DefaultStateId	uint16
+	// The item corresponding to this block
+	// if any
 	Item			*item.Item
+
+	// state id
+	MinStateId		uint16
+	MaxStateId		uint16
+	DefaultStateId	uint16
 
 	// is this a solid block
 	Solid			bool

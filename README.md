@@ -24,3 +24,6 @@ far far away :)
     * All movement (including crouching and sprinting)
     * Equipment (sends a fake item that looks the same to not reveal the real properties of the item)
     * Animation (hand swing)
+
+## Special blocks
+* Proper placement of redstone and normal torch

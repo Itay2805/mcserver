@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/itay2805/mcserver/math"
 	"github.com/itay2805/mcserver/minecraft"
-	"github.com/itay2805/mcserver/minecraft/block"
 	"github.com/itay2805/mcserver/minecraft/entity"
 	"github.com/itay2805/mcserver/minecraft/item"
 	"github.com/itay2805/mcserver/minecraft/proto/play"
@@ -272,19 +271,25 @@ func (p *Player) tickPlace(placement BlockPlacement) {
 	// get the action position
 	blockPos := placement.Location.ApplyFace(placement.Face)
 
-	// Get the block and set the animation
+	// Get the block
 	var itm *item.Item
 	if placement.Hand == 0 {
 		itm = item.GetById(int(p.Inventory[p.HeldItemIndex].ItemID))
-		p.Animation = play.AnimationSwingMainHand
 	} else {
 		itm = item.GetById(int(p.Inventory[45].ItemID))
-		p.Animation = play.AnimationSwingOffhand
 	}
 
-	// make sure the item is a block
-	blk := block.FromItem(itm)
-	if blk != nil {
+	// turn the item into a block that we need to place
+	blkStateId, ok := TransformItemToStateId(itm, placement.Face)
+	if ok {
+		// now that we know we can place the block set
+		// the animation
+		if placement.Hand == 0 {
+			p.Animation = play.AnimationSwingMainHand
+		} else {
+			p.Animation = play.AnimationSwingOffhand
+		}
+
 		// register a block change
 		chunkX := blockPos.X >> 4
 		chunkZ := blockPos.Z >> 4
@@ -293,13 +298,14 @@ func (p *Player) tickPlace(placement BlockPlacement) {
 			BlockX:     byte(blockPos.X & 0xf),
 			BlockZ:     byte(blockPos.Z & 0xf),
 			BlockY:     byte(blockPos.Y),
-			BlockState: blk.DefaultStateId,
+			BlockState: blkStateId,
 		})
+
+		// TODO: block updates
+		// TODO: block placement sound (kinda complicated...)
 	} else {
 		log.Println(p, "Tried to place non-block item", itm)
 	}
-
-	// TODO: block placement sound (kinda complicated...)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

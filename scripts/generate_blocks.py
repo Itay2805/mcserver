@@ -41,6 +41,8 @@ for block in blocks:
     print(f"var {name} = &Block{{")
     print(f"\tId: {block['id']},")
     print(f"\tName: \"{block['name']}\",")
+    print(f"\tMinStateId: {block['minStateId']},")
+    print(f"\tMaxStateId: {block['maxStateId']},")
     print(f"\tDefaultStateId: {block['defaultState']},")
     print(f"\tSolid: {'false' if block['boundingBox'] == 'empty' else 'true'},")
     print(f"\tTransparent: {'true' if block['transparent'] else 'false'},")
