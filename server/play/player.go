@@ -4,6 +4,7 @@ import (
 	"github.com/itay2805/mcserver/config"
 	"github.com/itay2805/mcserver/game"
 	"github.com/itay2805/mcserver/minecraft"
+	"github.com/itay2805/mcserver/minecraft/proto/play"
 	"log"
 	"time"
 )
@@ -122,18 +123,21 @@ func HandlePlayerAbilities(player *game.Player, reader *minecraft.Reader) {
 func HandlePlayerDigging(player *game.Player, reader *minecraft.Reader) {
 	status := reader.ReadVarint()
 	location := reader.ReadPosition()
-	//face := reader.ReadByte()
+	face := reader.ReadByte()
 
 	switch status {
-		// queue a player dig action
-		case 0:
-			// register that the player digged
-			player.Change(func() {
-				player.ActionQueue.Add(game.PlayerAction{
-					Type: game.PlayerActionDig,
-					Data: location,
-				})
+	// queue a player dig action
+	case 0:
+		// register that the player digged
+		player.Change(func() {
+			player.ActionQueue.Add(game.PlayerAction{
+				Type: game.PlayerActionDig,
+				Data: location,
 			})
+		})
+
+	default:
+		log.Println("HandlePlayerDigging:", player, "unknwon status", status, "at", location, "fact", face)
 	}
 }
 
@@ -171,5 +175,21 @@ func HandleEntityAction(player *game.Player, reader *minecraft.Reader) {
 		})
 	default:
 		log.Println("HandleEntityAction:", player, "sent invalid action id", aid)
+	}
+}
+
+func HandleAnimation(player *game.Player, reader *minecraft.Reader) {
+	hand := reader.ReadVarint()
+	switch hand {
+	case 0:
+		player.Change(func() {
+			player.Animation = play.AnimationSwingMainHand
+		})
+	case 1:
+		player.Change(func() {
+			player.Animation = play.AnimationSwingOffhand
+		})
+	default:
+		log.Println("HandleAnimation:", player, "unknown hand", hand)
 	}
 }

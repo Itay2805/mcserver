@@ -70,6 +70,9 @@ type Entity struct {
 	// The entity equipment
 	Equipment			[6]*play.Slot
 	EquipmentChanged	int
+
+	// The animation to play
+	Animation			byte
 }
 
 func (e *Entity) UpdateBounds() {

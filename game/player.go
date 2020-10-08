@@ -212,6 +212,9 @@ func (p *Player) syncChanges() {
 func (p *Player) tickDig(position minecraft.Position) {
 	// TODO: don't assume creative
 
+	// Swing main hand because we are digging
+	p.Animation = play.AnimationSwingMainHand
+
 	// get the prev block
 	blkstate := p.World.GetBlockState(position.X, position.Y, position.Z)
 
@@ -506,7 +509,13 @@ func (p *Player) syncEntities() {
 			}
 		}
 
-		// TODO: entity animation
+		// entity animation
+		if e.Animation != play.AnimationNone {
+			p.Send(play.EntityAnimation{
+				EntityID:  e.EID,
+				Animation: e.Animation,
+			})
+		}
 
 		// check if there is equipment to update
 		if newEntity || e.EquipmentChanged != 0 {
@@ -577,5 +586,6 @@ func (p *Player) cleanupTick() {
 	p.Moved = false
 	p.Rotated = false
 	p.MetadataChanged = false
+	p.Animation = play.AnimationNone
 	p.joined = false
 }

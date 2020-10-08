@@ -37,23 +37,23 @@ func (r SpawnPlayer) Encode(writer *minecraft.Writer) {
 }
 
 const (
-	AnimationNone = -1
-	AnimationSwingMainHand = 0
-	AnimationTakeDamage = 1
-	AnimationLeaveBed = 2
-	AnimationSwingOffhand = 3
-	AnimationCriticalEffect = 4
-	AnimationMagicCriticalEffect = 5
+	AnimationSwingMainHand = byte(iota)
+	AnimationTakeDamage
+	AnimationLeaveBed
+	AnimationSwingOffhand
+	AnimationCriticalEffect
+	AnimationMagicCriticalEffect
+	AnimationNone
 )
 
 type EntityAnimation struct {
-	EntityId		int32
-	Animation		byte
+	EntityID  int32
+	Animation byte
 }
 
 func (r EntityAnimation) Encode(writer *minecraft.Writer) {
 	writer.WriteVarint(0x06)
-	writer.WriteVarint(r.EntityId)
+	writer.WriteVarint(r.EntityID)
 	writer.WriteByte(r.Animation)
 }
 
