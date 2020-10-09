@@ -51,3 +51,11 @@ func GetById(stateId int) *Block {
 func GetByStateId(stateId uint16) *Block {
 	return stateIdToBlockId[stateId]
 }
+
+func boolToMeta(val bool) uint16 {
+	if val {
+		return 0
+	} else {
+		return 1
+	}
+}

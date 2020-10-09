@@ -26,4 +26,12 @@ far far away :)
     * Animation (hand swing)
 
 ## Special blocks
-* Proper placement of redstone and normal torch
+### Proper placement
+* Torch
+* Carved Pumpkin
+* Anvil
+* Glazed Terracotta
+* Loom
+* Stonecutter
+* Stairs (all kinds)
+    * missing proper water and upwards placement

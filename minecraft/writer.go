@@ -33,6 +33,7 @@ func (writer *Writer) WriteByte(val byte) {
 }
 
 func (writer *Writer) WriteShort(val int16) {
+	writer.Grow(2)
 	_ = binary.Write(&writer.Buffer, binary.BigEndian, val)
 }
 

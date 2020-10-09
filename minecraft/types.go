@@ -124,13 +124,53 @@ func (f Face) Invert() Face {
 
 func (f Face) String() string {
 	switch f {
-	case FaceBottom: return "<face bottom>"
-	case FaceTop: return "<face top>"
-	case FaceNorth: return "<face north>"
-	case FaceSouth: return "<face south>"
-	case FaceWest: return "<face west>"
-	case FaceEast: return "<face east>"
+	case FaceBottom: return "FaceBottom"
+	case FaceTop: return "FaceTop"
+	case FaceNorth: return "FaceNorth"
+	case FaceSouth: return "FaceSouth"
+	case FaceWest: return "FaceWest"
+	case FaceEast: return "FaceEast"
 	default:
-		return fmt.Sprintf("<face %d>", f)
+		return fmt.Sprintf("Face(%d)", f)
+	}
+}
+
+
+type Shape int
+
+const (
+	ShapeStraight = Shape(iota)
+	ShapeInnerLeft
+	ShapeInnerRight
+	ShapeOuterLeft
+	ShapeOuterRight
+)
+
+func (f Shape) String() string {
+	switch f {
+	case ShapeStraight: return "ShapeStraight"
+	case ShapeInnerLeft: return "ShapeInnerLeft"
+	case ShapeInnerRight: return "ShapeInnerRight"
+	case ShapeOuterLeft: return "ShapeOuterLeft"
+	case ShapeOuterRight: return "ShapeOuterRight"
+	default:
+		return fmt.Sprintf("Shape(%d)", f)
+	}
+}
+
+
+type Hinge int
+
+const (
+	HingeLeft = Hinge(iota)
+	HingeRight
+)
+
+func (f Hinge) String() string {
+	switch f {
+	case HingeLeft: return "HingeLeft"
+	case HingeRight: return "HingeRight"
+	default:
+		return fmt.Sprintf("Hinge(%d)", f)
 	}
 }
