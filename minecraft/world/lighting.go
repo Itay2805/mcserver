@@ -49,15 +49,13 @@ func (w *World) lightChunk(c *chunk.Chunk) {
 		for z := 0; z < 16; z++ {
 			c.SetSkyLight(x, 255, z, 15)
 
-			currFilter := 15
+			currLight := 15
 			for y := 254; y >= 0; y-- {
 				typ := block.GetByStateId(c.GetBlockState(x, y, z))
 
-				if currFilter > 0 {
-					currFilter -= typ.FilterLight
-					if currFilter < 0 {
-						currFilter = 0
-					}
+				currLight -= typ.FilterLight
+				if currLight < 0 {
+					currLight = 0
 				}
 
 				if !typ.Transparent {
@@ -70,7 +68,7 @@ func (w *World) lightChunk(c *chunk.Chunk) {
 							world: w,
 						})
 					}
-				} else {
+				} else if currLight == 0 {
 					skyLightUpdates.Add(lightUpdate{
 						x:     x,
 						y:     y,
@@ -80,7 +78,7 @@ func (w *World) lightChunk(c *chunk.Chunk) {
 					})
 				}
 
-				c.SetSkyLight(x, y, z, currFilter)
+				c.SetSkyLight(x, y, z, currLight)
 			}
 		}
 	}

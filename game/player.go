@@ -10,6 +10,7 @@ import (
 	"github.com/itay2805/mcserver/minecraft/world"
 	"github.com/itay2805/mcserver/server/socket"
 	"log"
+	math2 "math"
 	"reflect"
 	"sync"
 	"time"
@@ -95,6 +96,15 @@ func (p *Player) String() string  {
 	}
 }
 
+func (p *Player) UnitVector() math.Point {
+	pitch := p.Pitch.ToRadians()
+	yaw := p.Yaw.ToRadians()
+	return math.NewPoint(
+		-math2.Cos(pitch) * math2.Sin(yaw),
+		-math2.Cos(pitch),
+		-math2.Cos(pitch) * math2.Cos(yaw),
+	)
+}
 func NewPlayer(socket socket.Socket) *Player {
 	return &Player{
 		Socket: socket,
@@ -271,16 +281,23 @@ func (p *Player) tickPlace(placement BlockPlacement) {
 	// get the action position
 	blockPos := placement.Location.ApplyFace(placement.Face)
 
-	// Get the block
-	var itm *item.Item
+	// Get the item
+	var slot *play.Slot
 	if placement.Hand == 0 {
-		itm = item.GetById(int(p.Inventory[p.HeldItemIndex].ItemID))
+		slot = p.Inventory[p.HeldItemIndex]
 	} else {
-		itm = item.GetById(int(p.Inventory[45].ItemID))
+		slot = p.Inventory[45]
 	}
 
+	// nothing in the hand
+	if slot == nil {
+		return
+	}
+
+	itm := item.GetById(int(slot.ItemID))
+
 	// turn the item into a block that we need to place
-	blkStateId, ok := TransformItemToStateId(itm, placement.Face)
+	blkStateId, ok := TransformItemToStateId(p, itm, placement.Face)
 	if ok {
 		// now that we know we can place the block set
 		// the animation

@@ -108,3 +108,29 @@ const (
 	FaceWest
 	FaceEast
 )
+
+func (f Face) Invert() Face {
+	switch f {
+	case FaceBottom: return FaceTop
+	case FaceTop: return FaceBottom
+	case FaceNorth: return FaceSouth
+	case FaceSouth: return FaceNorth
+	case FaceWest: return FaceEast
+	case FaceEast: return FaceWest
+	default:
+		return FaceEast
+	}
+}
+
+func (f Face) String() string {
+	switch f {
+	case FaceBottom: return "<face bottom>"
+	case FaceTop: return "<face top>"
+	case FaceNorth: return "<face north>"
+	case FaceSouth: return "<face south>"
+	case FaceWest: return "<face west>"
+	case FaceEast: return "<face east>"
+	default:
+		return fmt.Sprintf("<face %d>", f)
+	}
+}

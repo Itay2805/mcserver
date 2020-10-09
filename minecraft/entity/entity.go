@@ -75,6 +75,19 @@ type Entity struct {
 	Animation			byte
 }
 
+func (e *Entity) GetFacing() minecraft.Face {
+	// 225-256 or 0-31
+	if 225 <= e.HeadYaw || e.HeadYaw <= 31 {
+		return minecraft.FaceSouth
+	} else if 161 <= e.HeadYaw && e.HeadYaw <= 224 {
+		return minecraft.FaceEast
+	} else if 97 <= e.HeadYaw && e.HeadYaw <= 160 {
+		return minecraft.FaceNorth
+	} else {
+		return minecraft.FaceWest
+	}
+}
+
 func (e *Entity) UpdateBounds() {
 	e.bounds = math.NewRect(
 		math.NewPoint(e.Position.X() - (e.Type.Width / 2), e.Position.Y(), e.Position.Z() - (e.Type.Width / 2)),

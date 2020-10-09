@@ -64,7 +64,7 @@ print("")
 # Block by state id lookup
 print("var stateIdToBlockId = [...]*Block{")
 for block in blocks:
-    for i in range(block['minStateId'], block['maxStateId']):
+    for i in range(block['minStateId'], block['maxStateId'] + 1):
         print(f"\tblocks[{block['id']}],")
 print("}")
 print("")
