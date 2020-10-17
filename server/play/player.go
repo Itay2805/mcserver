@@ -219,3 +219,13 @@ func HandlePlayerBlockPlacement(player *game.Player, reader *minecraft.Reader) {
 		})
 	})
 }
+
+func HandleUseItem(player *game.Player, reader *minecraft.Reader) {
+	hand := reader.ReadVarint()
+	player.Change(func() {
+		player.ActionQueue.Add(game.PlayerAction{
+			Type: game.PlayerActionUseItem,
+			Data: hand,
+		})
+	})
+}

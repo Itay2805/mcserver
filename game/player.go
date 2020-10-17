@@ -29,6 +29,7 @@ type PlayerActionType int
 const (
 	PlayerActionDig = PlayerActionType(iota)
 	PlayerActionPlace
+	PlayerActionUseItem
 )
 
 type BlockPlacement struct {
@@ -297,7 +298,7 @@ func (p *Player) tickPlace(placement BlockPlacement) {
 	itm := item.GetById(int(slot.ItemID))
 
 	// turn the item into a block that we need to place
-	blkStateId, ok := TransformItemToStateId(p, itm, placement.Face)
+	blkStateId, ok := p.TransformItemToStateId(itm, placement.Face)
 	if ok {
 		// now that we know we can place the block set
 		// the animation
@@ -320,8 +321,27 @@ func (p *Player) tickPlace(placement BlockPlacement) {
 
 		// TODO: block updates
 		// TODO: block placement sound (kinda complicated...)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (p *Player) tickUseItem(hand int32) {
+	// Get the item
+	var slot *play.Slot
+	if hand == 0 {
+		slot = p.Inventory[p.HeldItemIndex]
 	} else {
-		log.Println(p, "Tried to place non-block item", itm)
+		slot = p.Inventory[45]
+	}
+
+	// nothing in the hand
+	if slot == nil {
+		return
+	}
+
+	itm := item.GetById(int(slot.ItemID))
+	switch itm {
 	}
 }
 
@@ -335,6 +355,8 @@ func (p *Player) tick() {
 			p.tickDig(action.Data.(minecraft.Position))
 		case  PlayerActionPlace:
 			p.tickPlace(action.Data.(BlockPlacement))
+		case PlayerActionUseItem:
+			p.tickUseItem(action.Data.(int32))
 		}
 	}
 }
